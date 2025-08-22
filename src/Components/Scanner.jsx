@@ -13,6 +13,9 @@ export function ScannerPage() {
   const videoRef = useRef(null);
   const leitorCodigo = useRef(null);
 
+  const [totalVisitas, setTotalVisitas] = useState(0);
+  const [locaisAtivos, setLocaisAtivos] = useState(0);
+
   const locais = {
     "Patio": ["Sala 101", "Sala 102", "Sala 103", "Sala 104"],
     "Primeiro Andar": ["Sala 201", "Sala 202", "Sala 203", "Sala 204"],
@@ -21,6 +24,20 @@ export function ScannerPage() {
   };
 
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
+
+
+  useEffect(() => {
+    const storedTotalVisitas = localStorage.getItem("totalVisitas") || 0;
+    const storedLocaisAtivos = localStorage.getItem("locaisAtivos") || 0;
+
+    setTotalVisitas(parseInt(storedTotalVisitas));
+    setLocaisAtivos(parseInt(storedLocaisAtivos));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("totalVisitas", totalVisitas);
+    localStorage.setItem("locaisAtivos", locaisAtivos);
+  }, [totalVisitas, locaisAtivos]);
 
   useEffect(() => {
     if (!scannerAtivo || !videoRef.current) return;
@@ -37,6 +54,13 @@ export function ScannerPage() {
           timestamp: new Date().toLocaleString(),
         };
         setVisitasRecentes((prev) => [novaVisita, ...prev]);
+
+        setTotalVisitas((prev) => prev + 1);
+        setLocaisAtivos((prev) => {
+          const locaisUnicos = new Set(visitasRecentes.map((visita) => visita.local));
+          return locaisUnicos.size;
+        });
+
         leitor.reset();
         setScannerAtivo(false);
       }
@@ -49,7 +73,7 @@ export function ScannerPage() {
     return () => {
       leitor.reset();
     };
-  }, [scannerAtivo, localSelecionado, salaSelecionada]);
+  }, [scannerAtivo, localSelecionado, salaSelecionada, visitasRecentes]);
 
   return (
     <section className="corpo ativo">
