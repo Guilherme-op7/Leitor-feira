@@ -1,0 +1,65 @@
+.scanner-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.scanner-area {
+  position: relative;
+  background: linear-gradient(180deg, #2c3e50, #34495e);
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-status {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.scanner-inactive {
+  text-align: center;
+  color: white;
+  padding: 32px;
+  background: linear-gradient(180deg, #2c3e50, #34495e);
+  border-radius: 12px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+  .scanner-layout {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .caixa {
+    flex: 1;
+    min-width: 300px;
+  }
+}
