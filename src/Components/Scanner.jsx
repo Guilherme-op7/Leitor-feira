@@ -13,31 +13,14 @@ export function ScannerPage() {
   const videoRef = useRef(null);
   const leitorCodigo = useRef(null);
 
-  const [totalVisitas, setTotalVisitas] = useState(0);
-  const [locaisAtivos, setLocaisAtivos] = useState(0);
-
   const locais = {
-    "Patio": ["Sala 101", "Sala 102", "Sala 103", "Sala 104"],
-    "Primeiro Andar": ["Sala 201", "Sala 202", "Sala 203", "Sala 204"],
-    "Segundo Andar": ["Lab Informática 1", "Lab Informática 2", "Lab 3", "Lab 4"],
-    "Terceiro Andar": ["Área de Estudo", "Sala de Leitura", "Sala 301", "Sala 302"],
+    "Patio": ["Sala 1", "Sala 2", "Sala 3", "Sala 4"],
+    "Primeiro Andar": ["Sala 21", "Sala 22", "Sala 23", "Sala 24"],
+    "Segundo Andar": ["Lab Informática 1", "Lab Informática 2", "Lab 26", "Lab 27"],
+    "Terceiro Andar": ["Sala 28", "Sala 33"],
   };
 
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
-
-
-  useEffect(() => {
-    const storedTotalVisitas = localStorage.getItem("totalVisitas") || 0;
-    const storedLocaisAtivos = localStorage.getItem("locaisAtivos") || 0;
-
-    setTotalVisitas(parseInt(storedTotalVisitas));
-    setLocaisAtivos(parseInt(storedLocaisAtivos));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("totalVisitas", totalVisitas);
-    localStorage.setItem("locaisAtivos", locaisAtivos);
-  }, [totalVisitas, locaisAtivos]);
 
   useEffect(() => {
     if (!scannerAtivo || !videoRef.current) return;
@@ -54,13 +37,6 @@ export function ScannerPage() {
           timestamp: new Date().toLocaleString(),
         };
         setVisitasRecentes((prev) => [novaVisita, ...prev]);
-
-        setTotalVisitas((prev) => prev + 1);
-        setLocaisAtivos((prev) => {
-          const locaisUnicos = new Set(visitasRecentes.map((visita) => visita.local));
-          return locaisUnicos.size;
-        });
-
         leitor.reset();
         setScannerAtivo(false);
       }
@@ -73,7 +49,7 @@ export function ScannerPage() {
     return () => {
       leitor.reset();
     };
-  }, [scannerAtivo, localSelecionado, salaSelecionada, visitasRecentes]);
+  }, [scannerAtivo, localSelecionado, salaSelecionada]);
 
   return (
     <section className="corpo ativo">
