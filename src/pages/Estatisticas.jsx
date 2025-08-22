@@ -10,7 +10,16 @@ export function EstatisticasPage() {
     locations: 0,
   });
 
+  useEffect(() => {
+    const totalVisitas = parseInt(localStorage.getItem("totalVisitas") || 0);
+    const locaisAtivos = parseInt(localStorage.getItem("locaisAtivos") || 0);
+
+    setStats({ total: totalVisitas, locations: locaisAtivos });
+  }, [])
+
   const clearAllData = () => {
+    localStorage.setItem("totalVisitas", "0");
+    localStorage.setItem("locaisAtivos", "0");
     setStats({ total: 0, locations: 0 });
   };
 
