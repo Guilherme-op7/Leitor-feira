@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, QrCode, BarChart3, Home, Trash2, Users, Calendar } from "lucide-react";
 import '../styles/main.scss';
