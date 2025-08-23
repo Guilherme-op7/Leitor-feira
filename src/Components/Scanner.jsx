@@ -40,7 +40,7 @@ export function ScannerPage() {
         setVisitasRecentes((prev) => [novaVisita, ...prev]);
 
         try {
-          await axios.post("http://localhost:4000/api/visitas", {
+          await axios.post("https://leitor-feira-1.onrender.com/visitas", {
             local: localSelecionado,
             sala: salaSelecionada,
           });

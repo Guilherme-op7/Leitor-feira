@@ -14,7 +14,7 @@ export function EstatisticasPage() {
   useEffect(() => {
           async function carregarEstatisticas() {
         try {
-          const res = await axios.get("http://localhost:4000/api/estatisticas");
+          const res = await axios.get("https://leitor-feira-1.onrender.com/estatisticas");
           setStats(res.data);
         } catch (err) {
           console.error("Erro ao carregar estatísticas:", err);
@@ -25,7 +25,7 @@ export function EstatisticasPage() {
 
   const Limpar = async () => {
     try {
-      await axios.delete("http://localhost:4000/api/visitas");
+      await axios.delete("https://leitor-feira-1.onrender.com/visitas");
       setStats({ total: 0, locations: 0 });
     } catch (err) {
       console.error("Erro ao limpar dados:", err);
