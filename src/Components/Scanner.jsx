@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
+import  axios from "axios";
 import { MapPin, Camera, CameraOff, Clock, QrCode, ArrowRight, BarChart3, Home } from "lucide-react";
 import { Link } from 'react-router-dom';
 import '../styles/main.scss';
@@ -26,9 +27,9 @@ export function ScannerPage() {
     if (!scannerAtivo || !videoRef.current) return;
 
     const leitor = new BrowserMultiFormatReader();
-    leitorCodigo.current = leitor;
+    leitorCodigo.current = leitor;  
 
-    leitor.decodeFromVideoDevice(null, videoRef.current, (resultado, erro) => {
+    leitor.decodeFromVideoDevice(null, videoRef.current, async (resultado, erro) => {
       if (resultado) {
         const novaVisita = {
           id: Date.now().toString(),
@@ -37,8 +38,22 @@ export function ScannerPage() {
           timestamp: new Date().toLocaleString(),
         };
         setVisitasRecentes((prev) => [novaVisita, ...prev]);
+
+        try {
+          await axios.post("http://localhost:4000/api/visitas", {
+            local: localSelecionado,
+            sala: salaSelecionada,
+          });
+          console.log("Visita registrada no banco com sucesso!");
+        } 
+        
+        catch (err) {
+          console.error("Erro ao salvar visita no banco:", err);
+        }
+
         leitor.reset();
         setScannerAtivo(false);
+       
       }
 
       if (erro && erro.name !== "NotFoundException") {

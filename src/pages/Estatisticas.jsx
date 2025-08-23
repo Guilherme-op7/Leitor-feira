@@ -1,26 +1,35 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, QrCode, BarChart3, Home, Trash2, Users, Calendar } from "lucide-react";
+import axios from "axios";
+import { MapPin, QrCode, BarChart3, Home, Trash2, Users } from "lucide-react";
 import '../styles/main.scss';
 import '../styles/estatisticas.scss';
 
 export function EstatisticasPage() {
   const [stats, setStats] = useState({
     total: 0,
-    locations: 0,
+    locations: 0
   });
 
   useEffect(() => {
-    const totalVisitas = parseInt(localStorage.getItem("totalVisitas") || 0);
-    const locaisAtivos = parseInt(localStorage.getItem("locaisAtivos") || 0);
+          async function carregarEstatisticas() {
+        try {
+          const res = await axios.get("http://localhost:4000/api/estatisticas");
+          setStats(res.data);
+        } catch (err) {
+          console.error("Erro ao carregar estatísticas:", err);
+        }
+      }
+    carregarEstatisticas();
+  }, []);
 
-    setStats({ total: totalVisitas, locations: locaisAtivos });
-  }, [])
-
-  const clearAllData = () => {
-    localStorage.setItem("totalVisitas", "0");
-    localStorage.setItem("locaisAtivos", "0");
-    setStats({ total: 0, locations: 0 });
+  const Limpar = async () => {
+    try {
+      await axios.delete("http://localhost:4000/api/visitas");
+      setStats({ total: 0, locations: 0 });
+    } catch (err) {
+      console.error("Erro ao limpar dados:", err);
+    }
   };
 
   return (
@@ -82,7 +91,7 @@ export function EstatisticasPage() {
         </div>
 
         <div className="acoes">
-          <button className="botao botao-perigo" onClick={clearAllData}>
+          <button className="botao botao-perigo" onClick={Limpar}>
             <Trash2 className="botao-icone" />
             Limpar Dados
           </button>
