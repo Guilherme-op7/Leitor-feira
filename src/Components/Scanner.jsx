@@ -55,7 +55,7 @@ export function ScannerPage() {
         setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
 
         try {
-          await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
+          await axios.post("https://backend-leitor-feira.onrender.com/estatisticas", {
             local: localSelecionado,
             sala: salaSelecionada,
           });
