@@ -25,16 +25,20 @@ export function ScannerPage() {
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
 
   const iniciarScanner = () => {
-    if (!localSelecionado || !salaSelecionada) return;
+    if (!localSelecionado || !salaSelecionada) {
+      setErroMensagem("Selecione um local e uma sala antes de iniciar o scanner.");
+      return;
+    }
     setErroMensagem("");
     setScannerAtivo(true);
   };
 
   const pararScanner = () => {
-    setScannerAtivo(false);
     if (leitorCodigo.current) {
       leitorCodigo.current.reset();
+      leitorCodigo.current = null;
     }
+    setScannerAtivo(false);
   };
 
   useEffect(() => {
@@ -43,37 +47,52 @@ export function ScannerPage() {
     const leitor = new BrowserMultiFormatReader();
     leitorCodigo.current = leitor;
 
-    leitor.decodeFromVideoDevice(null, videoRef.current, async (resultado, erro) => {
-      if (resultado) {
-        const novaVisita = {
-          id: Date.now().toString(),
-          local: localSelecionado,
-          sala: salaSelecionada,
-          timestamp: new Date().toLocaleString(),
-        };
+    const startScanner = async () => {
+      try {
+        const devices = await leitor.listVideoInputDevices();
+        const deviceId = devices[0]?.deviceId || null;
 
-        setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
+        leitor.decodeFromVideoDevice(deviceId, videoRef.current, async (resultado, erro) => {
+          if (resultado) {
+            console.log("QR Code lido:", resultado.getText());
+            
+            const novaVisita = {
+              id: Date.now().toString(),
+              local: localSelecionado,
+              sala: salaSelecionada,
+              timestamp: new Date().toLocaleString(),
+            };
 
-        try {
-          await axios.post("https://backend-leitor-feira.onrender.com/estatisticas", {
-            local: localSelecionado,
-            sala: salaSelecionada,
-          });
-          console.log("Visita registrada no banco com sucesso!");
-        } 
-        
-        catch (err) {
-          console.error("Erro ao salvar visita no banco:", err);
-          setErroMensagem("Erro ao registrar a visita. Tente novamente.");
-        }
+            setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
 
+            try {
+              await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
+                local: localSelecionado,
+                sala: salaSelecionada,
+              });
+              console.log("Visita registrada no banco com sucesso!");
+            } 
+            
+            catch (err) {
+              console.error("Erro ao salvar visita no banco:", err);
+              setErroMensagem("Erro ao registrar a visita. Tente novamente.");
+            }
+
+            pararScanner();
+          }
+
+          if (erro && erro.name !== "NotFoundException") {
+            console.error(erro);
+          }
+        });
+      } catch (err) {
+        console.error("Erro ao acessar a câmera:", err);
+        setErroMensagem("Não foi possível acessar a câmera.");
         pararScanner();
       }
+    };
 
-      if (erro && erro.name !== "NotFoundException") {
-        console.error(erro);
-      }
-    });
+    startScanner();
 
     return () => {
       leitor.reset();
@@ -137,9 +156,7 @@ export function ScannerPage() {
                 </div>
               )}
               {erroMensagem && (
-                <div className="alerta alerta-perigo">
-                  {erroMensagem}
-                </div>
+                <div className="alerta alerta-perigo">{erroMensagem}</div>
               )}
             </div>
           </div>
