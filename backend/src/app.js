@@ -9,6 +9,6 @@ server.use(express.json());
 
 Roteamento(server);
 
-const PORTA = process.env.PORT;
+const PORT = process.env.PORT || 4000;
 
-server.listen(PORTA, () => console.log("API rodando na porta " + PORTA));
+server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
