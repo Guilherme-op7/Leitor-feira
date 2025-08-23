@@ -11,4 +11,4 @@ Roteamento(server);
 
 const PORTA = process.env.PORT;
 
-server.listen(PORTA, () => console.log("✅ API rodando na porta 4000"));
+server.listen(PORTA, () => console.log("API rodando na porta 4000"));
