@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import Roteamento from "./Routes/visitas.js";
+import Roteamento from "./src/Routes/visitas.js";
 
 const server = express();
 server.use(cors());
