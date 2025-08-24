@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import axios from "axios";
-import { MapPin, Camera, CameraOff, Clock, QrCode, ArrowRight, BarChart3, Home } from "lucide-react";
+import { MapPin, Camera, CameraOff, Clock, QrCode, ArrowRight, BarChart3, Home, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from 'react-router-dom';
 import '../styles/main.scss';
 import '../styles/scanner.scss';
@@ -12,8 +12,11 @@ export function ScannerPage() {
   const [scannerAtivo, setScannerAtivo] = useState(false);
   const [visitasRecentes, setVisitasRecentes] = useState([]);
   const [erroMensagem, setErroMensagem] = useState("");
+  const [statusMensagem, setStatusMensagem] = useState("");
+
   const videoRef = useRef(null);
   const leitorCodigo = useRef(null);
+  const qrLidos = useRef(new Set());
 
   const locais = {
     "Patio": ["Sala 1", "Sala 2", "Sala 3", "Sala 4"],
@@ -24,13 +27,14 @@ export function ScannerPage() {
 
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
 
-  const iniciarScanner = () => {
-    if (!localSelecionado || !salaSelecionada) {
-      setErroMensagem("Selecione um local e uma sala antes de iniciar o scanner.");
-      return;
-    }
-    setErroMensagem("");
-    setScannerAtivo(true);
+  const encontrarCameraTraseira = (devices) => {
+    const cameraTraseira = devices.find(device => 
+      device.label.toLowerCase().includes('back') ||
+      device.label.toLowerCase().includes('traseira') ||
+      device.label.toLowerCase().includes('rear') ||
+      device.label.toLowerCase().includes('environment')
+    );
+    return cameraTraseira?.deviceId || devices[devices.length - 1]?.deviceId || devices[0]?.deviceId;
   };
 
   const pararScanner = () => {
@@ -39,6 +43,52 @@ export function ScannerPage() {
       leitorCodigo.current = null;
     }
     setScannerAtivo(false);
+    setStatusMensagem("");
+    qrLidos.current.clear();
+  };
+
+  const registrarVisita = useCallback(async (qrCodeData) => {
+    setStatusMensagem("Registrando visita...");
+
+    try {
+      await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
+        local: localSelecionado,
+        sala: salaSelecionada,
+        qrCodeData,
+        timestamp: new Date().toISOString()
+      });
+
+      setStatusMensagem("Visita registrada com sucesso!");
+
+      const novaVisita = {
+        id: Date.now().toString(),
+        local: localSelecionado,
+        sala: salaSelecionada,
+        timestamp: new Date().toLocaleString(),
+        qrCodeData
+      };
+
+      setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
+
+      setTimeout(() => {
+        pararScanner();
+      }, 2000);
+    } catch (err) {
+      console.error("Erro ao registrar visita:", err);
+      setErroMensagem("Erro ao registrar a visita. Tente novamente.");
+      setStatusMensagem("");
+    }
+  }, [localSelecionado, salaSelecionada]);
+
+  const iniciarScanner = async () => {
+    if (!localSelecionado || !salaSelecionada) {
+      setErroMensagem("Selecione um local e uma sala antes de iniciar o scanner.");
+      return;
+    }
+
+    setErroMensagem("");
+    setStatusMensagem("Solicitando permissão da câmera...");
+    setScannerAtivo(true);
   };
 
   useEffect(() => {
@@ -49,45 +99,35 @@ export function ScannerPage() {
 
     const startScanner = async () => {
       try {
+        setStatusMensagem("Acessando câmeras...");
+        await navigator.mediaDevices.getUserMedia({ video: true });
+
         const devices = await leitor.listVideoInputDevices();
-        const deviceId = devices[0]?.deviceId || null;
+        if (devices.length === 0) throw new Error("Nenhuma câmera encontrada");
+
+        const deviceId = encontrarCameraTraseira(devices);
+        setStatusMensagem("Iniciando câmera traseira...");
 
         leitor.decodeFromVideoDevice(deviceId, videoRef.current, async (resultado, erro) => {
           if (resultado) {
-            console.log("QR Code lido:", resultado.getText());
-            
-            const novaVisita = {
-              id: Date.now().toString(),
-              local: localSelecionado,
-              sala: salaSelecionada,
-              timestamp: new Date().toLocaleString(),
-            };
-
-            setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
-
-            try {
-              await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
-                local: localSelecionado,
-                sala: salaSelecionada,
-              });
-              console.log("Visita registrada no banco com sucesso!");
-            } 
-            
-            catch (err) {
-              console.error("Erro ao salvar visita no banco:", err);
-              setErroMensagem("Erro ao registrar a visita. Tente novamente.");
+            const qrCodeData = resultado.getText();
+            if (!qrLidos.current.has(qrCodeData)) {
+              qrLidos.current.add(qrCodeData);
+              leitor.reset();
+              setScannerAtivo(false);
+              await registrarVisita(qrCodeData);
             }
-
-            pararScanner();
           }
 
           if (erro && erro.name !== "NotFoundException") {
-            console.error(erro);
+            console.error("Erro na leitura:", erro);
           }
         });
+
+        setStatusMensagem("Posicione o QR Code na área de leitura...");
       } catch (err) {
         console.error("Erro ao acessar a câmera:", err);
-        setErroMensagem("Não foi possível acessar a câmera.");
+        setErroMensagem("Não foi possível acessar a câmera. Verifique as permissões.");
         pararScanner();
       }
     };
@@ -95,9 +135,9 @@ export function ScannerPage() {
     startScanner();
 
     return () => {
-      leitor.reset();
+      if (leitorCodigo.current) leitorCodigo.current.reset();
     };
-  }, [scannerAtivo, localSelecionado, salaSelecionada]);
+  }, [scannerAtivo, registrarVisita]);
 
   return (
     <section className="corpo ativo">
@@ -133,6 +173,7 @@ export function ScannerPage() {
         </div>
 
         <div className="scanner-layout">
+
           <div className="caixa">
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
@@ -143,10 +184,13 @@ export function ScannerPage() {
             <div className="caixa-conteudo">
               {scannerAtivo ? (
                 <div className="scanner-area">
-                  <video ref={videoRef} autoPlay muted className="scanner-video" />
+                  <video ref={videoRef} autoPlay muted playsInline className="scanner-video" />
+                  <div className="scanner-overlay">
+                    <div className="scanner-frame"></div>
+                  </div>
                   <div className="scanner-status">
                     <Camera className="status-icon" />
-                    <span>Scanner ativo</span>
+                    <span>Câmera traseira ativa</span>
                   </div>
                 </div>
               ) : (
@@ -155,8 +199,19 @@ export function ScannerPage() {
                   <span>Scanner inativo</span>
                 </div>
               )}
+
+              {statusMensagem && (
+                <div className="alerta alerta-info">
+                  <AlertCircle className="alerta-icone" />
+                  <span>{statusMensagem}</span>
+                </div>
+              )}
+
               {erroMensagem && (
-                <div className="alerta alerta-perigo">{erroMensagem}</div>
+                <div className="alerta alerta-perigo">
+                  <AlertCircle className="alerta-icone" />
+                  <span>{erroMensagem}</span>
+                </div>
               )}
             </div>
           </div>
@@ -174,11 +229,9 @@ export function ScannerPage() {
                   <label className="formulario-rotulo">Local:</label>
                   <select
                     value={localSelecionado}
-                    onChange={(e) => {
-                      setLocalSelecionado(e.target.value);
-                      setSalaSelecionada("");
-                    }}
+                    onChange={(e) => { setLocalSelecionado(e.target.value); setSalaSelecionada(""); }}
                     className="formulario-selecao"
+                    disabled={scannerAtivo}
                   >
                     <option value="">Escolha um local</option>
                     {Object.keys(locais).map(local => (
@@ -192,7 +245,7 @@ export function ScannerPage() {
                   <select
                     value={salaSelecionada}
                     onChange={(e) => setSalaSelecionada(e.target.value)}
-                    disabled={!localSelecionado}
+                    disabled={!localSelecionado || scannerAtivo}
                     className="formulario-selecao"
                   >
                     <option value="">Escolha uma sala</option>
@@ -204,7 +257,8 @@ export function ScannerPage() {
 
                 {localSelecionado && salaSelecionada && (
                   <div className="alerta alerta-sucesso">
-                    Pronto para escanear em: <strong>{localSelecionado} - {salaSelecionada}</strong>
+                    <CheckCircle className="alerta-icone" />
+                    <span>Pronto para escanear em: <strong>{localSelecionado} - {salaSelecionada}</strong></span>
                   </div>
                 )}
               </div>
@@ -226,7 +280,11 @@ export function ScannerPage() {
                       <div className="info-visita">
                         <h4>{visita.local} - {visita.sala}</h4>
                         <p className="texto-pequeno">{visita.timestamp}</p>
+                        {visita.qrCodeData && (
+                          <p className="texto-pequeno qr-data">QR: {visita.qrCodeData}</p>
+                        )}
                       </div>
+                      <CheckCircle className="status-icon sucesso" />
                     </div>
                   ))}
                 </div>
