@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import axios from "axios";
-import { MapPin, Camera, CameraOff, Clock, QrCode, ArrowRight, BarChart3, Home } from "lucide-react";
+import { Camera, CameraOff, QrCode, ArrowRight, Home, BarChart3 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import '../styles/main.scss';
 import '../styles/scanner.scss';
@@ -10,14 +10,11 @@ export function ScannerPage() {
   const [localSelecionado, setLocalSelecionado] = useState("");
   const [salaSelecionada, setSalaSelecionada] = useState("");
   const [scannerAtivo, setScannerAtivo] = useState(false);
-  const [visitasRecentes, setVisitasRecentes] = useState([]);
   const [erroMensagem, setErroMensagem] = useState("");
-  const [cameras, setCameras] = useState([]);
-  const [cameraSelecionada, setCameraSelecionada] = useState(null);
-  const [jaLido, setJaLido] = useState(false);
+  const [ultimaLeitura, setUltimaLeitura] = useState("");
 
   const videoRef = useRef(null);
-  const leitorCodigo = useRef(null);
+  const leitorRef = useRef(null);
 
   const locais = {
     "Patio": ["Sala 1", "Sala 2", "Sala 3", "Sala 4"],
@@ -28,77 +25,62 @@ export function ScannerPage() {
 
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
 
-  // Listar câmeras disponíveis
-  useEffect(() => {
-    const listarCameras = async () => {
-      try {
-        const leitor = new BrowserMultiFormatReader();
-        const devices = await leitor.listVideoInputDevices();
-        setCameras(devices);
-        if (devices.length > 0) setCameraSelecionada(devices[0].deviceId);
-      } catch (err) {
-        console.error("Erro ao listar câmeras:", err);
-        setErroMensagem("Não foi possível acessar as câmeras do dispositivo.");
-      }
-    };
-    listarCameras();
-  }, []);
-
   const iniciarScanner = () => {
-    if (!localSelecionado || !salaSelecionada || !cameraSelecionada) {
-      setErroMensagem("Selecione local, sala e câmera antes de iniciar.");
+    if (!localSelecionado || !salaSelecionada) {
+      setErroMensagem("Selecione local e sala antes de iniciar.");
       return;
     }
+    
     setErroMensagem("");
-    setJaLido(false);
+    setUltimaLeitura("");
     setScannerAtivo(true);
   };
 
   const pararScanner = () => {
-    if (leitorCodigo.current) {
-      leitorCodigo.current.reset();
-      leitorCodigo.current = null;
+    if (leitorRef.current) {
+      leitorRef.current.reset();
+      leitorRef.current = null;
     }
     setScannerAtivo(false);
   };
 
-  // Iniciar scanner
   useEffect(() => {
-    if (!scannerAtivo || !videoRef.current || !cameraSelecionada) return;
+    if (!scannerAtivo || !videoRef.current) return;
 
     const leitor = new BrowserMultiFormatReader();
-    leitorCodigo.current = leitor;
+    leitorRef.current = leitor;
 
-    leitor.decodeFromVideoDevice(cameraSelecionada, videoRef.current, async (resultado, erro) => {
-      if (resultado && !jaLido) {
-        setJaLido(true);
-
-        const novaVisita = {
-          id: Date.now().toString(),
-          local: localSelecionado,
-          sala: salaSelecionada,
-          timestamp: new Date().toLocaleString(),
-        };
-        setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
-
+    leitor.decodeFromVideoDevice(null, videoRef.current, async (resultado, erro) => {
+      if (resultado) {
+        setUltimaLeitura(resultado.getText());
+        console.log("QR Code lido:", resultado.getText());
+        console.log("Local:", localSelecionado, "Sala:", salaSelecionada);
+        
         try {
           await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
             local: localSelecionado,
             sala: salaSelecionada
           });
+          console.log("Visita registrada no backend com sucesso!");
         } catch (err) {
           console.error("Erro ao registrar visita no backend:", err);
           setErroMensagem("Erro ao registrar visita no servidor.");
         }
-
+        
         pararScanner();
       }
 
-      if (erro && erro.name !== "NotFoundException") console.error(erro);
+      if (erro && erro.name !== "NotFoundException") {
+        console.error("Erro no scanner:", erro);
+      }
     });
 
-    return () => leitor.reset();
-  }, [scannerAtivo, cameraSelecionada, localSelecionado, salaSelecionada, jaLido]);
+    return () => {
+      if (leitorRef.current) {
+        leitorRef.current.reset();
+      }
+    };
+  }, [scannerAtivo, localSelecionado, salaSelecionada]);
 
   return (
     <section className="corpo ativo">
@@ -147,7 +129,7 @@ export function ScannerPage() {
                   <video ref={videoRef} autoPlay muted className="scanner-video" />
                   <div className="scanner-status">
                     <Camera className="status-icon" />
-                    <span>Scanner ativo</span>
+                    <span>Scanner ativo - Aponte para um QR Code</span>
                   </div>
                 </div>
               ) : (
@@ -156,6 +138,15 @@ export function ScannerPage() {
                   <span>Scanner inativo</span>
                 </div>
               )}
+              
+              {ultimaLeitura && (
+                <div className="alerta alerta-sucesso">
+                  <strong>QR Code lido com sucesso!</strong><br/>
+                  Conteúdo: {ultimaLeitura}<br/>
+                  Local: {localSelecionado} - {salaSelecionada}
+                </div>
+              )}
+              
               {erroMensagem && <div className="alerta alerta-perigo">{erroMensagem}</div>}
             </div>
           </div>
@@ -163,8 +154,7 @@ export function ScannerPage() {
           <div className="caixa">
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
-                <MapPin className="caixa-titulo-icone" />
-                <span>Selecionar Local / Sala / Câmera</span>
+                <span>Selecionar Local e Sala</span>
               </div>
             </div>
             <div className="caixa-conteudo">
@@ -197,52 +187,16 @@ export function ScannerPage() {
                     ))}
                   </select>
                 </div>
-
-                <div className="formulario-grupo">
-                  <label className="formulario-rotulo">Câmera:</label>
-                  <select
-                    value={cameraSelecionada || ""}
-                    onChange={(e) => setCameraSelecionada(e.target.value)}
-                    className="formulario-selecao"
-                  >
-                    {cameras.map(cam => (
-                      <option key={cam.deviceId} value={cam.deviceId}>{cam.label || "Câmera desconhecida"}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
           </div>
-
-          {visitasRecentes.length > 0 && (
-            <div className="caixa">
-              <div className="caixa-cabecalho">
-                <div className="caixa-titulo">
-                  <Clock className="caixa-titulo-icone" />
-                  <span>Visitas Recentes</span>
-                </div>
-              </div>
-              <div className="caixa-conteudo">
-                <div className="lista-visitas">
-                  {visitasRecentes.map(visita => (
-                    <div key={visita.id} className="item-visita">
-                      <div className="info-visita">
-                        <h4>{visita.local} - {visita.sala}</h4>
-                        <p className="texto-pequeno">{visita.timestamp}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="acoes">
           <button
             className="botao botao-primario"
             onClick={scannerAtivo ? pararScanner : iniciarScanner}
-            disabled={!localSelecionado || !salaSelecionada || !cameraSelecionada}
+            disabled={!localSelecionado || !salaSelecionada}
           >
             <QrCode className="botao-icone" />
             <span>{scannerAtivo ? "Parar Scanner" : "Iniciar Scanner"}</span>
