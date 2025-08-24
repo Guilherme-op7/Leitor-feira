@@ -12,9 +12,9 @@ export function ScannerPage() {
   const [scannerAtivo, setScannerAtivo] = useState(false);
   const [visitasRecentes, setVisitasRecentes] = useState([]);
   const [erroMensagem, setErroMensagem] = useState("");
-  const [sucessoMensagem, setSucessoMensagem] = useState("");
   const [cameras, setCameras] = useState([]);
   const [cameraSelecionada, setCameraSelecionada] = useState(null);
+  const [jaLido, setJaLido] = useState(false);
 
   const videoRef = useRef(null);
   const leitorCodigo = useRef(null);
@@ -28,13 +28,29 @@ export function ScannerPage() {
 
   const opcoesSalas = localSelecionado ? locais[localSelecionado] || [] : [];
 
+  // Listar câmeras disponíveis
+  useEffect(() => {
+    const listarCameras = async () => {
+      try {
+        const leitor = new BrowserMultiFormatReader();
+        const devices = await leitor.listVideoInputDevices();
+        setCameras(devices);
+        if (devices.length > 0) setCameraSelecionada(devices[0].deviceId);
+      } catch (err) {
+        console.error("Erro ao listar câmeras:", err);
+        setErroMensagem("Não foi possível acessar as câmeras do dispositivo.");
+      }
+    };
+    listarCameras();
+  }, []);
+
   const iniciarScanner = () => {
     if (!localSelecionado || !salaSelecionada || !cameraSelecionada) {
       setErroMensagem("Selecione local, sala e câmera antes de iniciar.");
       return;
     }
     setErroMensagem("");
-    setSucessoMensagem("");
+    setJaLido(false);
     setScannerAtivo(true);
   };
 
@@ -46,70 +62,43 @@ export function ScannerPage() {
     setScannerAtivo(false);
   };
 
-  useEffect(() => {
-    const listarCameras = async () => {
-      try {
-        const leitor = new BrowserMultiFormatReader();
-        const devices = await leitor.listVideoInputDevices();
-        setCameras(devices);
-        if (devices.length > 0) {
-
-          const backCamera = devices.find(d => /back|rear/i.test(d.label)) || devices[0];
-          setCameraSelecionada(backCamera.deviceId);
-        }
-      } catch (err) {
-        console.error("Erro ao listar câmeras:", err);
-        setErroMensagem("Não foi possível acessar as câmeras do dispositivo.");
-      }
-    };
-    listarCameras();
-  }, []);
-
+  // Iniciar scanner
   useEffect(() => {
     if (!scannerAtivo || !videoRef.current || !cameraSelecionada) return;
 
     const leitor = new BrowserMultiFormatReader();
     leitorCodigo.current = leitor;
 
-    const startScanner = async () => {
-      try {
-        leitor.decodeFromVideoDevice(cameraSelecionada, videoRef.current, async (resultado, erro) => {
-          if (resultado) {
-            console.log("QR Code lido:", resultado.getText());
+    leitor.decodeFromVideoDevice(cameraSelecionada, videoRef.current, async (resultado, erro) => {
+      if (resultado && !jaLido) {
+        setJaLido(true);
 
-            const novaVisita = {
-              id: Date.now().toString(),
-              local: localSelecionado,
-              sala: salaSelecionada,
-              timestamp: new Date().toLocaleString(),
-            };
-            setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
-            setSucessoMensagem("Visita registrada com sucesso!");
+        const novaVisita = {
+          id: Date.now().toString(),
+          local: localSelecionado,
+          sala: salaSelecionada,
+          timestamp: new Date().toLocaleString(),
+        };
+        setVisitasRecentes(prev => [novaVisita, ...prev].slice(0, 10));
 
-            try {
-              await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
-                local: localSelecionado,
-                sala: salaSelecionada
-              });
-            } catch (err) {
-              console.error("Erro ao registrar visita no backend:", err);
-              setErroMensagem("Erro ao registrar visita no servidor.");
-            }
+        try {
+          await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
+            local: localSelecionado,
+            sala: salaSelecionada
+          });
+        } catch (err) {
+          console.error("Erro ao registrar visita no backend:", err);
+          setErroMensagem("Erro ao registrar visita no servidor.");
+        }
 
-            pararScanner();
-          }
-          if (erro && erro.name !== "NotFoundException") console.error(erro);
-        });
-      } catch (err) {
-        console.error("Erro ao iniciar scanner:", err);
-        setErroMensagem("Não foi possível iniciar o scanner.");
         pararScanner();
       }
-    };
 
-    startScanner();
+      if (erro && erro.name !== "NotFoundException") console.error(erro);
+    });
+
     return () => leitor.reset();
-  }, [scannerAtivo, cameraSelecionada, localSelecionado, salaSelecionada]);
+  }, [scannerAtivo, cameraSelecionada, localSelecionado, salaSelecionada, jaLido]);
 
   return (
     <section className="corpo ativo">
@@ -168,7 +157,6 @@ export function ScannerPage() {
                 </div>
               )}
               {erroMensagem && <div className="alerta alerta-perigo">{erroMensagem}</div>}
-              {sucessoMensagem && <div className="alerta alerta-sucesso">{sucessoMensagem}</div>}
             </div>
           </div>
 
@@ -176,7 +164,7 @@ export function ScannerPage() {
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
                 <MapPin className="caixa-titulo-icone" />
-                <span>Selecionar Local e Câmera</span>
+                <span>Selecionar Local / Sala / Câmera</span>
               </div>
             </div>
             <div className="caixa-conteudo">
@@ -185,10 +173,7 @@ export function ScannerPage() {
                   <label className="formulario-rotulo">Local:</label>
                   <select
                     value={localSelecionado}
-                    onChange={(e) => {
-                      setLocalSelecionado(e.target.value);
-                      setSalaSelecionada("");
-                    }}
+                    onChange={(e) => setLocalSelecionado(e.target.value)}
                     className="formulario-selecao"
                   >
                     <option value="">Escolha um local</option>
@@ -213,28 +198,18 @@ export function ScannerPage() {
                   </select>
                 </div>
 
-                {cameras.length > 0 && (
-                  <div className="formulario-grupo">
-                    <label className="formulario-rotulo">Câmera:</label>
-                    <select
-                      value={cameraSelecionada || ""}
-                      onChange={(e) => setCameraSelecionada(e.target.value)}
-                      className="formulario-selecao"
-                    >
-                      {cameras.map(cam => (
-                        <option key={cam.deviceId} value={cam.deviceId}>
-                          {cam.label || "Câmera desconhecida"}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {localSelecionado && salaSelecionada && cameraSelecionada && (
-                  <div className="alerta alerta-sucesso">
-                    Pronto para escanear em: <strong>{localSelecionado} - {salaSelecionada}</strong>
-                  </div>
-                )}
+                <div className="formulario-grupo">
+                  <label className="formulario-rotulo">Câmera:</label>
+                  <select
+                    value={cameraSelecionada || ""}
+                    onChange={(e) => setCameraSelecionada(e.target.value)}
+                    className="formulario-selecao"
+                  >
+                    {cameras.map(cam => (
+                      <option key={cam.deviceId} value={cam.deviceId}>{cam.label || "Câmera desconhecida"}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
