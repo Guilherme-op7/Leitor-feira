@@ -14,7 +14,9 @@ export function EstatisticasPage() {
       try {
         const res = await axios.get("https://backend-leitor-feira.onrender.com/estatisticas");
         setStats(res.data);
-      } catch (err) {
+      } 
+      
+      catch (err) {
         console.error("Erro ao carregar estatísticas:", err);
         setErro("Erro ao carregar estatísticas");
       }
@@ -26,7 +28,9 @@ export function EstatisticasPage() {
     try {
       await axios.delete("https://backend-leitor-feira.onrender.com/estatisticas");
       setStats([]);
-    } catch (err) {
+    } 
+    
+    catch (err) {
       console.error("Erro ao limpar dados:", err);
       setErro("Erro ao limpar dados");
     }

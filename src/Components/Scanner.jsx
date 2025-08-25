@@ -30,7 +30,7 @@ export function ScannerPage() {
       setErroMensagem("Selecione local e sala antes de iniciar.");
       return;
     }
-    
+
     setErroMensagem("");
     setUltimaLeitura("");
     setScannerAtivo(true);
@@ -41,8 +41,16 @@ export function ScannerPage() {
       leitorRef.current.reset();
       leitorRef.current = null;
     }
+
+    if (videoRef.current?.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
     setScannerAtivo(false);
   };
+
 
   useEffect(() => {
     if (!scannerAtivo || !videoRef.current) return;
@@ -55,7 +63,7 @@ export function ScannerPage() {
         setUltimaLeitura(resultado.getText());
         console.log("QR Code lido:", resultado.getText());
         console.log("Local:", localSelecionado, "Sala:", salaSelecionada);
-        
+
         try {
           await axios.post("https://backend-leitor-feira.onrender.com/visitas", {
             local: localSelecionado,
@@ -66,7 +74,7 @@ export function ScannerPage() {
           console.error("Erro ao registrar visita no backend:", err);
           setErroMensagem("Erro ao registrar visita no servidor.");
         }
-        
+
         pararScanner();
       }
 
@@ -138,15 +146,15 @@ export function ScannerPage() {
                   <span>Scanner inativo</span>
                 </div>
               )}
-              
+
               {ultimaLeitura && (
                 <div className="alerta alerta-sucesso">
-                  <strong>QR Code lido com sucesso!</strong><br/>
-                  Conteúdo: {ultimaLeitura}<br/>
+                  <strong>QR Code lido com sucesso!</strong><br />
+                  Conteúdo: {ultimaLeitura}<br />
                   Local: {localSelecionado} - {salaSelecionada}
                 </div>
               )}
-              
+
               {erroMensagem && <div className="alerta alerta-perigo">{erroMensagem}</div>}
             </div>
           </div>
