@@ -11,6 +11,12 @@ export function ScannerPage() {
   const [scannerAtivo, setScannerAtivo] = useState(false);
   const [erroMensagem, setErroMensagem] = useState("");
   const [ultimaLeitura, setUltimaLeitura] = useState("");
+  const [mostrarPopup, setMostrarPopup] = useState(false);
+  
+  const [historicoLeituras, setHistoricoLeituras] = useState(() => {
+    const stored = localStorage.getItem("historicoLeituras");
+    return stored ? JSON.parse(stored) : [];
+  });
 
   const videoRef = useRef(null);
   const leitorRef = useRef(null);
@@ -80,17 +86,27 @@ export function ScannerPage() {
         data: new Date().toISOString()
       };
 
-
       await axios.post("https://backend-leitor-feira.onrender.com/visitas", payload);
+
+      const novaLeitura = {
+        codigo: ultimaLeitura,
+        sala: salaSelecionada,
+        data: new Date().toLocaleString()
+      };
+
+      const novoHistorico = [novaLeitura, ...historicoLeituras];
+      setHistoricoLeituras(novoHistorico);
+      localStorage.setItem("historicoLeituras", JSON.stringify(novoHistorico));
 
       setUltimaLeitura("");
       localStorage.removeItem("ultimaLeitura");
 
+      setMostrarPopup(true);
+      setTimeout(() => setMostrarPopup(false), 2000);
+
       setErroMensagem("");
       console.log("Leitura registrada com sucesso!");
-    }
-
-    catch (err) {
+    } catch (err) {
       setErroMensagem("Erro ao registrar no servidor.");
       console.error(err);
     }
@@ -98,6 +114,12 @@ export function ScannerPage() {
 
   return (
     <section className="corpo ativo">
+      {mostrarPopup && (
+        <div className="popup-sucesso">
+          Leitura registrada com sucesso!
+        </div>
+      )}
+
       <nav className="cabeca">
         <div className="cabeca-container">
           <div className="cabeca-conteudo">
@@ -175,7 +197,6 @@ export function ScannerPage() {
                 </div>
               )}
 
-
               {erroMensagem && <div className="alerta alerta-perigo">{erroMensagem}</div>}
             </div>
           </div>
@@ -204,6 +225,21 @@ export function ScannerPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="historico-leituras">
+          <h3>Histórico de Leituras</h3>
+          {historicoLeituras.length === 0 ? (
+            <p>Nenhuma leitura registrada ainda.</p>
+          ) : (
+            <ul>
+              {historicoLeituras.map((item, index) => (
+                <li key={index}>
+                  <strong>{item.codigo}</strong> - {item.sala} - <em>{item.data}</em>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="acoes">

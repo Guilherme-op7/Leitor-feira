@@ -200,6 +200,36 @@
   }
 }
 
+.popup-sucesso {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4caf50;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 999;
+}
+
+.historico-leituras {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f4f4f4;
+  border-radius: 8px;
+}
+
+.historico-leituras ul {
+  list-style: none;
+  padding: 0;
+}
+
+.historico-leituras li {
+  margin-bottom: 6px;
+}
+
+
 @media (min-width: 768px) {
   .scanner-layout {
     flex-direction: row;
