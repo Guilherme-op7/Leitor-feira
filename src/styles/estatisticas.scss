@@ -1,0 +1,36 @@
+
+.stats-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+
+.stats-caixa {
+  border-left-width: 4px;
+}
+
+.stats-primario {
+  border-left-color: #3498db;
+}
+
+.stats-destaque {
+  border-left-color: #2980b9;
+}
+
+.stats-sucesso {
+  border-left-color: #27ae60;
+}
+
+
+@media (min-width: 768px) {
+  .stats-layout {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .caixa {
+    flex: 1;
+    min-width: 200px;
+  }
+}
