@@ -97,26 +97,6 @@ export function EstatisticasPage() {
     return filtradas;
   };
 
-  const exportarCSV = () => {
-    const dadosFiltrados = filtrarEstatisticas();
-    const csvContent = [
-      "Data/Hora,Andar,Sala,Código QR",
-      ...dadosFiltrados.map(item => 
-        `${item.data},${item.andar},${item.sala},${item.codigo}`
-      )
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `estatisticas_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const limparFiltros = () => {
     setFiltroAndar("");
     setFiltroSala("");
@@ -229,10 +209,6 @@ export function EstatisticasPage() {
             <div className="filtros-acoes">
               <button onClick={limparFiltros} className="botao botao-contorno">
                 Limpar Filtros
-              </button>
-              <button onClick={exportarCSV} className="botao botao-primario">
-                <Download className="botao-icone" />
-                Exportar CSV
               </button>
             </div>
           </div>
