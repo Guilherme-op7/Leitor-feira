@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
-import axios from "axios";
+import { adicionarVisita } from "../config/users";
 import { Camera, CameraOff, QrCode, ArrowRight, Home, BarChart3 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import '../styles/main.scss';
@@ -80,34 +80,33 @@ export function ScannerPage() {
 
   const confirmarLeitura = async () => {
     try {
-      const payload = {
-        codigo: ultimaLeitura,
-        sala: salaSelecionada,
-        data: new Date().toISOString()
-      };
 
-      await axios.post("https://backend-leitor-feira.onrender.com/visitas", payload);
+      setTimeout(() => {
 
-      const novaLeitura = {
-        codigo: ultimaLeitura,
-        sala: salaSelecionada,
-        data: new Date().toLocaleString()
-      };
+        const novaVisita = adicionarVisita(ultimaLeitura, salaSelecionada);
 
-      const novoHistorico = [novaLeitura, ...historicoLeituras];
-      setHistoricoLeituras(novoHistorico);
-      localStorage.setItem("historicoLeituras", JSON.stringify(novoHistorico));
+        const novaLeitura = {
+          codigo: ultimaLeitura,
+          sala: salaSelecionada,
+          data: new Date().toLocaleString()
+        };
 
-      setUltimaLeitura("");
-      localStorage.removeItem("ultimaLeitura");
+        const novoHistorico = [novaLeitura, ...historicoLeituras];
+        setHistoricoLeituras(novoHistorico);
+        localStorage.setItem("historicoLeituras", JSON.stringify(novoHistorico));
 
-      setMostrarPopup(true);
-      setTimeout(() => setMostrarPopup(false), 2000);
+        setUltimaLeitura("");
+        localStorage.removeItem("ultimaLeitura");
 
-      setErroMensagem("");
-      console.log("Leitura registrada com sucesso!");
+        setMostrarPopup(true);
+        setTimeout(() => setMostrarPopup(false), 2000);
+
+        setErroMensagem("");
+        console.log("Leitura registrada com sucesso!", novaVisita);
+      }, 500);
+
     } catch (err) {
-      setErroMensagem("Erro ao registrar no servidor.");
+      setErroMensagem("Erro ao registrar leitura.");
       console.error(err);
     }
   };

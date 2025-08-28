@@ -1,10 +1,19 @@
 import { Link } from "react-router-dom";
-import { QrCode, BarChart3, ArrowRight, Home } from "lucide-react";
-import '../styles/main.scss';
+import { QrCode, BarChart3, LogIn, ArrowRight } from "lucide-react";
+import "../styles/main.scss";
 
-export function HomePage() {
+export function Home() {
+  const token = localStorage.getItem("token");
+  const usuario = localStorage.getItem("usuario");
+
+  const fazerLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.reload();
+  };
+
   return (
-    <section id="home-page">
+    <section className="corpo ativo">
       <nav className="cabeca">
         <div className="cabeca-container">
           <div className="cabeca-conteudo">
@@ -12,50 +21,109 @@ export function HomePage() {
               <QrCode className="cabeca-logo" />
               <span className="cabeca-titulo">Leitor QRFrei</span>
             </div>
-
-            <div className="cabeca-links">
-              <Link to="/" className="cabeca-link ativo">
-                <Home className="cabeca-icone" />
-                <span className="cabeca-texto">Início</span>
-              </Link>
-              <Link to="/scanner" className="cabeca-link">
-                <QrCode className="cabeca-icone" />
-                <span className="cabeca-texto">Scanner QR</span>
-              </Link>
-              <Link to="/estatisticas" className="cabeca-link">
-                <BarChart3 className="cabeca-icone" />
-                <span className="cabeca-texto">Estatísticas</span>
-              </Link>
+            <div className="cabeca-acoes">
+              {token && usuario ? (
+                <div className="usuario-logado">
+                  <span>Olá, {JSON.parse(usuario).nome || "Usuário"}</span>
+                  <button onClick={fazerLogout} className="botao botao-contorno">
+                    Sair
+                  </button>
+                </div>
+              ) : (
+                <Link to="/login" className="botao botao-primario">
+                  <LogIn className="botao-icone" />
+                  Entrar
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="gremio">
-        <div className="gremio-container">
-          <div className="gremio-conteudo">
-            <div className="gremio-icone">
-              <QrCode className="gremio-icone-svg" />
+      <div className="corpo-container">
+        <div className="corpo-cabecalho">
+          <h1 className="corpo-titulo">Sistema de Leitor QR</h1>
+          <p className="corpo-desc">
+            Registre a passagem de pessoas pelos locais usando códigos QR
+          </p>
+        </div>
+
+        <div className="home-layout">
+          <div className="caixa home-caixa">
+            <div className="caixa-cabecalho">
+              <div className="caixa-titulo">
+                <QrCode className="caixa-titulo-icone" />
+                <span>Scanner QR</span>
+              </div>
             </div>
-
-            <div>
-              <h1 className="gremio-titulo">Leitor QRFrei</h1>
-              <p className="gremio-descricao">
-                Sistema inteligente para rastrear a movimentação de pessoas em diferentes locais
-              </p>
+            <div className="caixa-conteudo">
+              <p>Use o scanner para ler códigos QR e registrar visitas nos locais.</p>
+              {token ? (
+                <Link to="/scanner" className="botao botao-primario">
+                  <QrCode className="botao-icone" />
+                  <span>Acessar Scanner</span>
+                  <ArrowRight className="botao-icone" />
+                </Link>
+              ) : (
+                <Link to="/login" className="botao botao-primario">
+                  <LogIn className="botao-icone" />
+                  <span>Fazer Login</span>
+                  <ArrowRight className="botao-icone" />
+                </Link>
+              )}
             </div>
+          </div>
 
-            <div className="gremio-botoes">
-              <Link to="/scanner" className="botao botao-branco">
-                <QrCode className="botao-icone" />
-                <span>Iniciar Scanner</span>
-                <ArrowRight className="botao-icone" />
-              </Link>
+          <div className="caixa home-caixa">
+            <div className="caixa-cabecalho">
+              <div className="caixa-titulo">
+                <BarChart3 className="caixa-titulo-icone" />
+                <span>Estatísticas</span>
+              </div>
+            </div>
+            <div className="caixa-conteudo">
+              <p>Visualize estatísticas completas das visitas registradas no sistema.</p>
+              {token && usuario ? (
+                JSON.parse(usuario).isAdmin ? (
+                  <Link to="/estatisticas" className="botao botao-primario">
+                    <BarChart3 className="botao-icone" />
+                    <span>Ver Estatísticas</span>
+                    <ArrowRight className="botao-icone" />
+                  </Link>
+                ) : (
+                  <div className="acesso-negado">
+                    <p className="texto-pequeno">Apenas administradores podem acessar estatísticas completas.</p>
+                  </div>
+                )
+              ) : (
+                <Link to="/login" className="botao botao-primario">
+                  <LogIn className="botao-icone" />
+                  <span>Fazer Login</span>
+                  <ArrowRight className="botao-icone" />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
 
-              <Link to="/estatisticas" className="botao botao-transparente">
-                <BarChart3 className="botao-icone" />
-                <span>Ver Estatísticas</span>
-              </Link>
+        <div className="home-info">
+          <h3>Como funciona?</h3>
+          <div className="passos">
+            <div className="passo">
+              <div className="passo-numero">1</div>
+              <p>Faça login no sistema</p>
+            </div>
+            <div className="passo">
+              <div className="passo-numero">2</div>
+              <p>Selecione a sala onde está</p>
+            </div>
+            <div className="passo">
+              <div className="passo-numero">3</div>
+              <p>Use o scanner para ler QR Codes</p>
+            </div>
+            <div className="passo">
+              <div className="passo-numero">4</div>
+              <p>Confirme a leitura para registrar</p>
             </div>
           </div>
         </div>
