@@ -42,9 +42,9 @@ export function Home() {
 
       <div className="corpo-container">
         <div className="corpo-cabecalho">
-          <h1 className="corpo-titulo">Sistema de Leitor QR</h1>
+          <h1 className="corpo-titulo">Leitor QRfrei</h1>
           <p className="corpo-desc">
-            Registre a passagem de pessoas pelos locais usando códigos QR
+            Registre a passagem de pessoas pelos locais usando códigos QRCODE
           </p>
         </div>
 
@@ -53,11 +53,11 @@ export function Home() {
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
                 <QrCode className="caixa-titulo-icone" />
-                <span>Scanner QR</span>
+                <span>Login Usuario</span>
               </div>
             </div>
             <div className="caixa-conteudo">
-              <p>Use o scanner para ler códigos QR e registrar visitas nos locais.</p>
+              <p>Use o scanner para ler códigos QRCODE e registrar visitas nos locais.</p>
               {token ? (
                 <Link to="/scanner" className="botao botao-primario">
                   <QrCode className="botao-icone" />
@@ -78,7 +78,7 @@ export function Home() {
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
                 <BarChart3 className="caixa-titulo-icone" />
-                <span>Estatísticas</span>
+                <span>Login Administrador</span>
               </div>
             </div>
             <div className="caixa-conteudo">
@@ -106,27 +106,6 @@ export function Home() {
           </div>
         </div>
 
-        <div className="home-info">
-          <h3>Como funciona?</h3>
-          <div className="passos">
-            <div className="passo">
-              <div className="passo-numero">1</div>
-              <p>Faça login no sistema</p>
-            </div>
-            <div className="passo">
-              <div className="passo-numero">2</div>
-              <p>Selecione a sala onde está</p>
-            </div>
-            <div className="passo">
-              <div className="passo-numero">3</div>
-              <p>Use o scanner para ler QR Codes</p>
-            </div>
-            <div className="passo">
-              <div className="passo-numero">4</div>
-              <p>Confirme a leitura para registrar</p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

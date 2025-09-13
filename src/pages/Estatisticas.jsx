@@ -45,7 +45,9 @@ export function EstatisticasPage() {
       }
       setUsuario(usuarioObj);
       carregarEstatisticas();
-    } catch (err) {
+    } 
+    
+    catch (err) {
       console.error("Erro ao verificar usuário:", err);
       navigate("/login");
     }

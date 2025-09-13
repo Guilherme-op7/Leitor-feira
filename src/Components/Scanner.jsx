@@ -14,17 +14,20 @@ export function ScannerPage() {
   const [mostrarPopup, setMostrarPopup] = useState(false);
   
   const [historicoLeituras, setHistoricoLeituras] = useState(() => {
-    const stored = localStorage.getItem("historicoLeituras");
-    return stored ? JSON.parse(stored) : [];
+    const armazenado = localStorage.getItem("historicoLeituras");
+    return armazenado ? JSON.parse(armazenado) : [];
   });
 
   const videoRef = useRef(null);
   const leitorRef = useRef(null);
 
-  const salas = ["Sala 1", "Sala 2", "Sala 3", "Sala 4", "Sala 21", "Sala 22", "Sala 23", "Sala 24",
-    "Lab Informática 1", "Lab Informática 2", "Lab 26", "Lab 27", "Sala 28", "Sala 33"];
+  const salas = [
+    "Sala 1", "Sala 2", "Sala 3", "Sala 4", "Sala 21", "Sala 22",
+    "Sala 23", "Sala 24", "Lab Informática 1", "Lab Informática 2",
+    "Lab 26", "Lab 27", "Sala 28", "Sala 33"
+  ];
 
-  const iniciarScanner = () => {
+  function iniciarScanner() {
     if (!salaSelecionada) {
       setErroMensagem("Selecione a sala antes de iniciar.");
       return;
@@ -32,22 +35,22 @@ export function ScannerPage() {
     setErroMensagem("");
     setUltimaLeitura("");
     setScannerAtivo(true);
-  };
+  }
 
-  const pararScanner = () => {
+  function pararScanner() {
     if (leitorRef.current) {
       leitorRef.current.reset();
       leitorRef.current = null;
     }
 
     if (videoRef.current?.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
+      const trilhas = videoRef.current.srcObject.getTracks();
+      trilhas.forEach(trilha => trilha.stop());
       videoRef.current.srcObject = null;
     }
 
     setScannerAtivo(false);
-  };
+  }
 
   useEffect(() => {
     if (!scannerAtivo || !videoRef.current) return;
@@ -78,11 +81,9 @@ export function ScannerPage() {
     };
   }, [scannerAtivo, salaSelecionada]);
 
-  const confirmarLeitura = async () => {
+  async function confirmarLeitura() {
     try {
-
       setTimeout(() => {
-
         const novaVisita = adicionarVisita(ultimaLeitura, salaSelecionada);
 
         const novaLeitura = {
@@ -104,12 +105,13 @@ export function ScannerPage() {
         setErroMensagem("");
         console.log("Leitura registrada com sucesso!", novaVisita);
       }, 500);
-
-    } catch (err) {
+    } 
+    
+    catch (erro) {
       setErroMensagem("Erro ao registrar leitura.");
-      console.error(err);
+      console.error(erro);
     }
-  };
+  }
 
   return (
     <section className="corpo ativo">
@@ -124,7 +126,7 @@ export function ScannerPage() {
           <div className="cabeca-conteudo">
             <div className="cabeca-marca">
               <QrCode className="cabeca-logo" />
-              <span className="cabeca-titulo">Leitor QRFrei</span>
+              <span className="cabeca-titulo">QRFrei</span>
             </div>
             <div className="cabeca-links">
               <Link to="/" className="cabeca-link">
@@ -147,7 +149,6 @@ export function ScannerPage() {
       <div className="corpo-container">
         <div className="corpo-cabecalho">
           <h1 className="corpo-titulo">Scanner QR Code</h1>
-          <p className="corpo-desc">Registre a passagem de pessoas pela sala selecionada</p>
         </div>
 
         <div className="scanner-layout">
@@ -170,7 +171,7 @@ export function ScannerPage() {
               ) : (
                 <div className="scanner-inactive">
                   <CameraOff className="status-icon" />
-                  <span>Scanner inativo</span>
+                  <span>Scanner inativo - selecione uma sala!</span>
                 </div>
               )}
 
@@ -226,21 +227,6 @@ export function ScannerPage() {
           </div>
         </div>
 
-        <div className="historico-leituras">
-          <h3>Histórico de Leituras</h3>
-          {historicoLeituras.length === 0 ? (
-            <p>Nenhuma leitura registrada ainda.</p>
-          ) : (
-            <ul>
-              {historicoLeituras.map((item, index) => (
-                <li key={index}>
-                  <strong>{item.codigo}</strong> - {item.sala} - <em>{item.data}</em>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
         <div className="acoes">
           <button
             className="botao botao-primario"
@@ -251,12 +237,9 @@ export function ScannerPage() {
             <span>{scannerAtivo ? "Parar Scanner" : "Iniciar Scanner"}</span>
             <ArrowRight className="botao-icone" />
           </button>
-
-          <Link to="/estatisticas" className="botao botao-contorno">
-            <BarChart3 className="botao-icone" />
-            <span>Ver Estatísticas</span>
-          </Link>
         </div>
+
+
       </div>
     </section>
   );

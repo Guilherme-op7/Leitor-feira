@@ -58,21 +58,6 @@ export function LoginPage() {
           <p>Acesse o sistema de leitor QR</p>
         </div>
 
-        <div className="credenciais-teste">
-          <h3>Credenciais para Teste:</h3>
-          <div className="credenciais-lista">
-            <div className="credencial-item">
-              <strong>Admin:</strong> admin@teste.com / admin123
-            </div>
-            <div className="credencial-item">
-              <strong>Usuário:</strong> usuario@teste.com / 123456
-            </div>
-            <div className="credencial-item">
-              <strong>Teste:</strong> teste@teste.com / teste123
-            </div>
-          </div>
-        </div>
-
         <form onSubmit={fazerLogin} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email</label>
