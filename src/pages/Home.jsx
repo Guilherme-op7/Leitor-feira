@@ -32,7 +32,7 @@ export function Home() {
               ) : (
                 <Link to="/login" className="botao botao-primario">
                   <LogIn className="botao-icone" />
-                  Entrar
+                  Clique para Entrar
                 </Link>
               )}
             </div>
@@ -53,7 +53,7 @@ export function Home() {
             <div className="caixa-cabecalho">
               <div className="caixa-titulo">
                 <QrCode className="caixa-titulo-icone" />
-                <span>Login Usuario</span>
+                <span>Clique para entrar</span>
               </div>
             </div>
             <div className="caixa-conteudo">
@@ -67,7 +67,7 @@ export function Home() {
               ) : (
                 <Link to="/login" className="botao botao-primario">
                   <LogIn className="botao-icone" />
-                  <span>Fazer Login</span>
+                  <span>Clique para entrar</span>
                   <ArrowRight className="botao-icone" />
                 </Link>
               )}
@@ -98,7 +98,7 @@ export function Home() {
               ) : (
                 <Link to="/login" className="botao botao-primario">
                   <LogIn className="botao-icone" />
-                  <span>Fazer Login</span>
+                  <span>Clique para entrar</span>
                   <ArrowRight className="botao-icone" />
                 </Link>
               )}
