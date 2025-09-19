@@ -15,12 +15,10 @@ function ProtectedRoute({ children, requireAdmin = false }) {
   if (requireAdmin) {
     try {
       const usuarioObj = JSON.parse(usuario);
-      if (!usuarioObj.isAdmin) {
+      if (usuarioObj.tipo !== "admin") {
         return <Navigate to="/scanner" replace />;
       }
-    } 
-    
-    catch (error) {
+    } catch (error) {
       return <Navigate to="/login" replace />;
     }
   }

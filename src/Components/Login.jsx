@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { verificarCredenciais } from "../config/users";
+import { api } from "../config/api.js";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import "../styles/main.scss";
 import "../styles/login.scss";
@@ -18,35 +18,32 @@ export function LoginPage() {
     setErro("");
     setCarregando(true);
 
-    setTimeout(() => {
-      try {
+    try {
+      const resposta = await api.post("/login", { email, senha });
+      const { token, usuario } = resposta.data;
 
-        const usuario = verificarCredenciais(email, senha);
+      const usuarioComAdmin = { ...usuario, isAdmin: usuario.tipo === "admin" };
 
-        if (usuario) {
-          const tokenMock = `mock_token_${usuario.id}_${Date.now()}`;
+      localStorage.setItem("token", token);
+      localStorage.setItem("usuario", JSON.stringify(usuarioComAdmin));
 
-          localStorage.setItem("token", tokenMock);
-          localStorage.setItem("usuario", JSON.stringify(usuario));
-          
-          console.log("Login realizado com sucesso:", usuario);
-          navigate("/scanner");
-        }
-        
-        else {
-          setErro("Email ou senha incorretos");
-        }
+      if (usuario.tipo === "admin") {
+        navigate("/estatisticas");
       } 
       
-      catch (err) {
-        setErro("Erro interno do sistema");
-        console.error("Erro no login:", err);
-      } 
-      
-      finally {
-        setCarregando(false);
+      else {
+        navigate("/scanner");
       }
-    }, 1000); 
+
+    } 
+    catch (err) {
+      console.error("Erro no login:", err);
+      setErro("Email ou senha incorretos");
+    } 
+    
+    finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -56,21 +53,6 @@ export function LoginPage() {
           <Lock className="login-icon" />
           <h1>Login</h1>
           <p>Acesse o sistema de leitor QR</p>
-        </div>
-
-        <div className="credenciais-teste">
-          <h3>Credenciais para Teste:</h3>
-          <div className="credenciais-lista">
-            <div className="credencial-item">
-              <strong>Admin:</strong> admin@teste.com / admin123
-            </div>
-            <div className="credencial-item">
-              <strong>Usuário:</strong> usuario@teste.com / 123456
-            </div>
-            <div className="credencial-item">
-              <strong>Teste:</strong> teste@teste.com / teste123
-            </div>
-          </div>
         </div>
 
         <form onSubmit={fazerLogin} className="login-form">

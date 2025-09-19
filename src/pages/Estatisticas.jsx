@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { estatisticasMock } from "../config/users";
-import { BarChart3, LogOut, Filter, Download, Calendar, MapPin, QrCode, Clock, Home } from "lucide-react";
+import axios from "axios";
+import { 
+  BarChart3, LogOut, Filter, Calendar, MapPin, QrCode, Clock, Home 
+} from "lucide-react";
 import "../styles/main.scss";
 import "../styles/estatisticas.scss";
 
@@ -22,6 +24,12 @@ export function EstatisticasPage() {
     "Segundo Andar": ["Lab Informática 1", "Lab Informática 2", "Lab 26", "Lab 27"],
     "Terceiro Andar": ["Sala 28", "Sala 33"],
   };
+  const andarPorSala = {};
+  for (const andar in salas) {
+    salas[andar].forEach(sala => {
+      andarPorSala[sala] = andar;
+    });
+  }
 
   useEffect(() => {
     verificarAutenticacao();
@@ -38,35 +46,38 @@ export function EstatisticasPage() {
 
     try {
       const usuarioObj = JSON.parse(usuarioSalvo);
-      if (!usuarioObj.isAdmin) {
+      if (usuarioObj.tipo !== "admin") {
         setErro("Acesso negado. Apenas administradores podem ver estatísticas completas.");
         setCarregando(false);
         return;
       }
+
       setUsuario(usuarioObj);
-      carregarEstatisticas();
-    } 
-    
-    catch (err) {
+      carregarEstatisticas(token);
+    } catch (err) {
       console.error("Erro ao verificar usuário:", err);
       navigate("/login");
     }
   };
 
-  const carregarEstatisticas = async () => {
+  const carregarEstatisticas = async (token) => {
     try {
       setCarregando(true);
+      const resposta = await axios.get("http://localhost:4000/estatisticas", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      setTimeout(() => {
+      const estatisticasComAndar = resposta.data.map(item => ({
+        ...item,
+        andar: andarPorSala[item.sala] || "Desconhecido"
+      }));
 
-        setEstatisticas([...estatisticasMock]);
-        setErro("");
-        setCarregando(false);
-      }, 1000);
-
+      setEstatisticas(estatisticasComAndar);
+      setErro("");
     } catch (err) {
-      setErro("Erro ao carregar estatísticas");
-      console.error("Erro:", err);
+      console.error("Erro ao carregar estatísticas:", err);
+      setErro("Erro ao carregar estatísticas do servidor.");
+    } finally {
       setCarregando(false);
     }
   };

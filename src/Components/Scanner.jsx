@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
-import { adicionarVisita } from "../config/users";
 import { Camera, CameraOff, QrCode, ArrowRight, Home, BarChart3 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import '../styles/main.scss';
