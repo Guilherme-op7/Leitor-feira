@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import { Camera, CameraOff, QrCode, ArrowRight, Home, BarChart3 } from "lucide-react";
 import { Link } from 'react-router-dom';
+import { api } from "../config/api.js"; 
 import '../styles/main.scss';
 import '../styles/scanner.scss';
 
@@ -11,11 +12,6 @@ export function ScannerPage() {
   const [erroMensagem, setErroMensagem] = useState("");
   const [ultimaLeitura, setUltimaLeitura] = useState("");
   const [mostrarPopup, setMostrarPopup] = useState(false);
-  
-  const [historicoLeituras, setHistoricoLeituras] = useState(() => {
-    const armazenado = localStorage.getItem("historicoLeituras");
-    return armazenado ? JSON.parse(armazenado) : [];
-  });
 
   const videoRef = useRef(null);
   const leitorRef = useRef(null);
@@ -41,13 +37,10 @@ export function ScannerPage() {
       leitorRef.current.reset();
       leitorRef.current = null;
     }
-
     if (videoRef.current?.srcObject) {
-      const trilhas = videoRef.current.srcObject.getTracks();
-      trilhas.forEach(trilha => trilha.stop());
+      videoRef.current.srcObject.getTracks().forEach(trilha => trilha.stop());
       videoRef.current.srcObject = null;
     }
-
     setScannerAtivo(false);
   }
 
@@ -60,65 +53,47 @@ export function ScannerPage() {
     leitor.decodeFromVideoDevice(null, videoRef.current, (resultado, erro) => {
       if (resultado) {
         const codigo = resultado.getText();
-
-        const ultima = localStorage.getItem("ultimaLeitura");
-        if (ultima === codigo) return;
-
+        if (localStorage.getItem("ultimaLeitura") === codigo) return;
         setUltimaLeitura(codigo);
         localStorage.setItem("ultimaLeitura", codigo);
       }
-
       if (erro && erro.name !== "NotFoundException") {
         console.error("Erro no scanner:", erro);
       }
     });
 
-    return () => {
-      if (leitorRef.current) {
-        leitorRef.current.reset();
-      }
-    };
-  }, [scannerAtivo, salaSelecionada]);
+    return () => leitorRef.current?.reset();
+  }, [scannerAtivo]);
 
   async function confirmarLeitura() {
     try {
-      setTimeout(() => {
-        const novaVisita = adicionarVisita(ultimaLeitura, salaSelecionada);
+      if (!ultimaLeitura || !salaSelecionada) {
+        setErroMensagem("QR code ou sala inválidos.");
+        return;
+      }
 
-        const novaLeitura = {
-          codigo: ultimaLeitura,
-          sala: salaSelecionada,
-          data: new Date().toLocaleString()
-        };
+      await api.post("/scanner", {
+        codigo: ultimaLeitura,
+        sala: salaSelecionada
+      });
 
-        const novoHistorico = [novaLeitura, ...historicoLeituras];
-        setHistoricoLeituras(novoHistorico);
-        localStorage.setItem("historicoLeituras", JSON.stringify(novoHistorico));
+      setUltimaLeitura("");
+      localStorage.removeItem("ultimaLeitura");
 
-        setUltimaLeitura("");
-        localStorage.removeItem("ultimaLeitura");
-
-        setMostrarPopup(true);
-        setTimeout(() => setMostrarPopup(false), 2000);
-
-        setErroMensagem("");
-        console.log("Leitura registrada com sucesso!", novaVisita);
-      }, 500);
+      setMostrarPopup(true);
+      setTimeout(() => setMostrarPopup(false), 2000);
+      setErroMensagem("");
     } 
     
     catch (erro) {
       setErroMensagem("Erro ao registrar leitura.");
-      console.error(erro);
+      console.error("Erro no POST:", erro);
     }
   }
 
   return (
     <section className="corpo ativo">
-      {mostrarPopup && (
-        <div className="popup-sucesso">
-          Leitura registrada com sucesso!
-        </div>
-      )}
+      {mostrarPopup && <div className="popup-sucesso">Leitura registrada com sucesso!</div>}
 
       <nav className="cabeca">
         <div className="cabeca-container">
@@ -146,9 +121,7 @@ export function ScannerPage() {
       </nav>
 
       <div className="corpo-container">
-        <div className="corpo-cabecalho">
-          <h1 className="corpo-titulo">Scanner QR Code</h1>
-        </div>
+        <h1 className="corpo-titulo">Scanner QR Code</h1>
 
         <div className="scanner-layout">
           <div className="caixa">
@@ -180,17 +153,12 @@ export function ScannerPage() {
                     <h3>QR Code Detectado!</h3>
                     <p>Código: <strong>{ultimaLeitura}</strong></p>
                     <p>Sala: <strong>{salaSelecionada}</strong></p>
-
                     <div className="acoes-leitura">
-                      <button className="botao botao-primario" onClick={confirmarLeitura}>
-                        Confirmar
-                      </button>
+                      <button className="botao botao-primario" onClick={confirmarLeitura}>Confirmar</button>
                       <button className="botao botao-contorno" onClick={() => {
                         setUltimaLeitura("");
                         localStorage.removeItem("ultimaLeitura");
-                      }}>
-                        Cancelar
-                      </button>
+                      }}>Cancelar</button>
                     </div>
                   </div>
                 </div>
@@ -207,21 +175,16 @@ export function ScannerPage() {
               </div>
             </div>
             <div className="caixa-conteudo">
-              <div className="formulario">
-                <div className="formulario-grupo">
-                  <label className="formulario-rotulo">Sala:</label>
-                  <select
-                    value={salaSelecionada}
-                    onChange={(e) => setSalaSelecionada(e.target.value)}
-                    className="formulario-selecao"
-                  >
-                    <option value="">Escolha uma sala</option>
-                    {salas.map(sala => (
-                      <option key={sala} value={sala}>{sala}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <select
+                value={salaSelecionada}
+                onChange={(e) => setSalaSelecionada(e.target.value)}
+                className="formulario-selecao"
+              >
+                <option value="">Escolha uma sala</option>
+                {salas.map(sala => (
+                  <option key={sala} value={sala}>{sala}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -237,8 +200,6 @@ export function ScannerPage() {
             <ArrowRight className="botao-icone" />
           </button>
         </div>
-
-
       </div>
     </section>
   );
