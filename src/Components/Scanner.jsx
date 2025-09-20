@@ -72,7 +72,7 @@ export function ScannerPage() {
         return;
       }
 
-      await api.post("/scanner", {
+      await api.post("/visitas", {
         codigo: ultimaLeitura,
         sala: salaSelecionada
       });
