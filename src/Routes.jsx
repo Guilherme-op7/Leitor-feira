@@ -35,9 +35,7 @@ function App() {
         <Route 
           path="/scanner" 
           element={
-            <ProtectedRoute>
               <ScannerPage />
-            </ProtectedRoute>
           } 
         />
         <Route 
