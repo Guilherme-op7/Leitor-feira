@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../config/api.js";
+import axios from "axios";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import "../styles/main.scss";
 import "../styles/login.scss";
@@ -19,7 +19,8 @@ export function LoginPage() {
     setCarregando(true);
 
     try {
-      const resposta = await api.post("/login", { email, senha });
+      // faz login diretamente com axios, sem config
+      const resposta = await axios.post("http://localhost:4000/login", { email, senha });
       const { token, usuario } = resposta.data;
 
       const usuarioComAdmin = { ...usuario, isAdmin: usuario.tipo === "admin" };
@@ -29,18 +30,14 @@ export function LoginPage() {
 
       if (usuario.tipo === "admin") {
         navigate("/estatisticas");
-      } 
-      
-      else {
+      } else {
         navigate("/scanner");
       }
-
     } 
     catch (err) {
       console.error("Erro no login:", err);
       setErro("Email ou senha incorretos");
     } 
-    
     finally {
       setCarregando(false);
     }

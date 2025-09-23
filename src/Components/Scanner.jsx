@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import { Camera, CameraOff, QrCode, ArrowRight, Home, BarChart3 } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { api } from "../config/api.js"; 
+import axios from "axios";
 import '../styles/main.scss';
 import '../styles/scanner.scss';
 
@@ -53,10 +53,12 @@ export function ScannerPage() {
     leitor.decodeFromVideoDevice(null, videoRef.current, (resultado, erro) => {
       if (resultado) {
         const codigo = resultado.getText();
+        
         if (localStorage.getItem("ultimaLeitura") === codigo) return;
         setUltimaLeitura(codigo);
         localStorage.setItem("ultimaLeitura", codigo);
       }
+
       if (erro && erro.name !== "NotFoundException") {
         console.error("Erro no scanner:", erro);
       }
@@ -72,9 +74,13 @@ export function ScannerPage() {
         return;
       }
 
-      await api.post("/visitas", {
+      const token = localStorage.getItem("token");
+
+      await axios.post("http://localhost:4000/visitas", {
         codigo: ultimaLeitura,
         sala: salaSelecionada
+      }, {
+        headers: { "x-access-token": token }
       });
 
       setUltimaLeitura("");
@@ -84,7 +90,6 @@ export function ScannerPage() {
       setTimeout(() => setMostrarPopup(false), 2000);
       setErroMensagem("");
     } 
-    
     catch (erro) {
       setErroMensagem("Erro ao registrar leitura.");
       console.error("Erro no POST:", erro);

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { 
-  BarChart3, LogOut, Filter, Calendar, MapPin, QrCode, Clock, Home 
+import {
+  BarChart3, LogOut, Filter, Calendar, MapPin, QrCode, Clock, Home
 } from "lucide-react";
 import "../styles/main.scss";
 import "../styles/estatisticas.scss";
@@ -54,17 +54,21 @@ export function EstatisticasPage() {
 
       setUsuario(usuarioObj);
       carregarEstatisticas(token);
-    } catch (err) {
+    } 
+    
+    catch (err) {
       console.error("Erro ao verificar usuário:", err);
       navigate("/login");
     }
   };
 
-  const carregarEstatisticas = async (token) => {
+  const carregarEstatisticas = async () => {
     try {
       setCarregando(true);
+      const token = localStorage.getItem("token");
+
       const resposta = await axios.get("http://localhost:4000/estatisticas", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "x-access-token": token }
       });
 
       const estatisticasComAndar = resposta.data.map(item => ({
@@ -74,13 +78,18 @@ export function EstatisticasPage() {
 
       setEstatisticas(estatisticasComAndar);
       setErro("");
-    } catch (err) {
+    }
+
+    catch (err) {
       console.error("Erro ao carregar estatísticas:", err);
       setErro("Erro ao carregar estatísticas do servidor.");
-    } finally {
+    }
+
+    finally {
       setCarregando(false);
     }
   };
+
 
   const fazerLogout = () => {
     localStorage.removeItem("token");
@@ -178,7 +187,7 @@ export function EstatisticasPage() {
             <Filter className="filtros-icone" />
             <h3>Filtros</h3>
           </div>
-          
+
           <div className="filtros-grid">
             <div className="filtro-grupo">
               <label>Andar:</label>
@@ -235,7 +244,7 @@ export function EstatisticasPage() {
               <p>{estatisticasFiltradas.length}</p>
             </div>
           </div>
-          
+
           <div className="resumo-item">
             <MapPin className="resumo-icone" />
             <div>
@@ -243,7 +252,7 @@ export function EstatisticasPage() {
               <p>{new Set(estatisticasFiltradas.map(item => item.sala)).size}</p>
             </div>
           </div>
-          
+
           <div className="resumo-item">
             <QrCode className="resumo-icone" />
             <div>
@@ -302,7 +311,7 @@ export function EstatisticasPage() {
             <Home className="botao-icone" />
             <span>Voltar ao Início</span>
           </Link>
-          
+
           <Link to="/scanner" className="botao botao-primario">
             <QrCode className="botao-icone" />
             <span>Ir para Scanner</span>
