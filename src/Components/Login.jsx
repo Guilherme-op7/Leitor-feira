@@ -19,7 +19,7 @@ export function LoginPage() {
     setCarregando(true);
 
     try {
-      // faz login diretamente com axios, sem config
+
       const resposta = await axios.post("http://localhost:4000/login", { email, senha });
       const { token, usuario } = resposta.data;
 
