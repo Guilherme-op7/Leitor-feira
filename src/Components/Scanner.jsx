@@ -17,9 +17,18 @@ export function ScannerPage() {
   const leitorRef = useRef(null);
 
   const salas = [
-    "Sala 1", "Sala 2", "Sala 3", "Sala 4", "Sala 21", "Sala 22",
-    "Sala 23", "Sala 24", "Lab Informática 1", "Lab Informática 2",
-    "Lab 26", "Lab 27", "Sala 28", "Sala 33"
+    "Cedesp", "Mesa do Instituto", "Oficina de auto elétrica",
+     "Oficina de Mecânica de Autos", "Oficina Automação Residencial e Robótica",
+      "Sala 4 - exame vista",
+    "Sala 6 - ingles", "Troca de Livros", "Sala 17 - UBS",
+     "Sala 18 - Empreendedorismo e Logistica",
+    "Sala 19 - Creas", "Sala 20 - Contabilidade", "Sala 24 - CV",
+     "Lab 25 - Hardware e Redes", "Lab 26 - Programação",
+      "Lab 27 - Elaboração de curriculo", "Auditorio Cate",
+      "Auditorio - ADESAMPA", "Auditorio - Oficina de Linkedin", 
+      "Auditorio - Simulação de entrevista", "APS Soluções", "PWI Sistemas",
+      "Biacoitê", "Casa da mulher Paulistana", "Sao paulo Open Centre",
+      "Conexão bem maior", "STB Intercâmbios", "Horta Fácil"
   ];
 
   function iniciarScanner() {
